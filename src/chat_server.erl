@@ -5,7 +5,7 @@
 -module(chat_server).
 -behaviour(gen_server).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
--define(TCP_OPTIONS_ACTIVE_ONCE, [list, {packet, 2}, {active, once}, {reuseaddr, true},{nodelay, false},{delay_send, true}]).
+-define(TCP_OPTIONS_ACTIVE_ONCE, [list, {packet, 0}, {active, once}, {reuseaddr, true},{nodelay, false},{delay_send, true}]).
 -define(TCP_OPTIONS_PASSIVE, [list, {packet, 0}, {active, false}, {reuseaddr, true},{nodelay, false},{delay_send, true}]).
 
 %% ====================================================================

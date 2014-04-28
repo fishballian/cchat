@@ -18,23 +18,24 @@ make_pid(Socket) ->
 %% Internal functions
 %% ====================================================================
 
-loop(Socket,LogicPid) ->
+loop(Socket, LogicPid) ->
 	receive
 		{tcp, Socket, Data} ->
 			LogicPid ! {self(),data,Data,Socket},
 			inet:setopts(Socket, [{active,once}]),
-			loop(Socket,LogicPid);
-		{tcp_closed, Socket,LogicPid} ->
+			loop(Socket, LogicPid);
+		{tcp_closed, Socket} ->
 			close(Socket, LogicPid);
 		{LogicPid, send, Data} ->
 			gen_tcp:send(Socket, Data),
 			loop(Socket, LogicPid);
 		{LogicPid, wrong_password} ->
-			close(Socket, LogicPid)
-			
+			close(Socket, LogicPid);
+		_Other ->
+			ok
 	end.
 
 close(Socket, LogicPid) ->
 	LogicPid ! stop,
-	io:fwrite("Socket ~p disconnected. ~n",[Socket]),
+	io:fwrite("Socket ~p disconnected. ~n", [Socket]),
 	gen_tcp:close(Socket).

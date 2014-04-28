@@ -5,7 +5,7 @@
 -module(channel_server).
 -behaviour(gen_server).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
--record(chatter, {name, socket, logic_pid}).
+-record(chatter, {name, socket, logic_pid,io_pid}).
 
 %% ====================================================================
 %% API functions
@@ -126,23 +126,23 @@ code_change(_OldVsn, State, _Extra) ->
 
 loop(Tab)->
 	receive
-		{insert, Name, Socket, Pid} ->
-			Chatter = #chatter{name=Name, socket=Socket, logic_pid=Pid},
-			ets:insert(Tab, {Name,Chatter}),
+		{insert, Name, Socket, LogicPid, IOPid} ->
+			Chatter = #chatter{name=Name, socket=Socket, logic_pid=LogicPid, io_pid=IOPid},
+			ets:insert(Tab, {Name, Chatter}),
 			loop(Tab);
 		{delete, Name} ->
 			ets:delete(Tab, Name),
 			loop(Tab);
 		{broadcast, Data} ->
-			spawn(fun() -> broadcast(Tab, Data) end),
+			broadcast(Tab, Data),
 			loop(Tab);
 		stop ->
-			ok
+			ok;
+		_Other -> ok
 	end.
 
 broadcast(Tab, Data) ->
 	F = fun({_Name, Chatter}, _A) ->
-			Socket = Chatter#chatter.socket,
-			gen_tcp:send(Socket, Data)
+			 Chatter#chatter.io_pid ! {Chatter#chatter.logic_pid, send, Data}
 		end,
 	ets:foldl(F, 0, Tab).
